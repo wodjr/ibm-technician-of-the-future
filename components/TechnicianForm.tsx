@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, type ChangeEvent } from "react";
+import { useState, type ChangeEvent, type FormEvent } from "react";
 import type { TechnicianInput } from "@/types/technician";
 
 type Props = {
   onSubmit: (data: TechnicianInput) => void;
+  isLoading?: boolean;
 };
 
-export default function TechnicianForm({ onSubmit }: Props) {
+export default function TechnicianForm({ onSubmit, isLoading = false }: Props) {
   const [input, setInput] = useState<TechnicianInput>({
     assetId: "BR-1001",
     symptoms: "Device shows red warning light and intermittent network loss.",
@@ -26,7 +27,7 @@ export default function TechnicianForm({ onSubmit }: Props) {
     }));
   }
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     onSubmit(input);
   }
@@ -42,7 +43,8 @@ export default function TechnicianForm({ onSubmit }: Props) {
           name="assetId"
           value={input.assetId}
           onChange={handleChange}
-          className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-pink-500 focus:ring-2 focus:ring-pink-100"
+          disabled={isLoading}
+          className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-pink-500 focus:ring-2 focus:ring-pink-100 disabled:cursor-not-allowed disabled:bg-slate-100"
         />
       </div>
       <div className="space-y-2">
@@ -55,7 +57,8 @@ export default function TechnicianForm({ onSubmit }: Props) {
           rows={4}
           value={input.symptoms}
           onChange={handleChange}
-          className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-pink-500 focus:ring-2 focus:ring-pink-100"
+          disabled={isLoading}
+          className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-pink-500 focus:ring-2 focus:ring-pink-100 disabled:cursor-not-allowed disabled:bg-slate-100"
         />
       </div>
       <div className="grid gap-6 sm:grid-cols-2">
@@ -68,7 +71,8 @@ export default function TechnicianForm({ onSubmit }: Props) {
             name="errorCode"
             value={input.errorCode}
             onChange={handleChange}
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-pink-500 focus:ring-2 focus:ring-pink-100"
+            disabled={isLoading}
+            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-pink-500 focus:ring-2 focus:ring-pink-100 disabled:cursor-not-allowed disabled:bg-slate-100"
           />
         </div>
         <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
@@ -78,7 +82,8 @@ export default function TechnicianForm({ onSubmit }: Props) {
             type="checkbox"
             checked={input.escalate}
             onChange={handleChange}
-            className="h-5 w-5 rounded border-slate-300 text-pink-600 focus:ring-pink-500"
+            disabled={isLoading}
+            className="h-5 w-5 rounded border-slate-300 text-pink-600 focus:ring-pink-500 disabled:cursor-not-allowed disabled:opacity-50"
           />
           <label htmlFor="escalate" className="text-sm font-medium text-slate-700">
             Escalation requested
@@ -87,9 +92,17 @@ export default function TechnicianForm({ onSubmit }: Props) {
       </div>
       <button
         type="submit"
-        className="inline-flex w-full items-center justify-center rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+        disabled={isLoading}
+        className="inline-flex w-full items-center justify-center rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
       >
-        Generate guidance
+        {isLoading ? (
+          <span className="inline-flex items-center gap-2">
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+            Generating...
+          </span>
+        ) : (
+          "Generate guidance"
+        )}
       </button>
     </form>
   );

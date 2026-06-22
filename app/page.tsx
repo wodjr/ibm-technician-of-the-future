@@ -10,25 +10,13 @@ import { initialEquipment, workflowSteps } from "@/lib/mockData";
 import type { DiagnosisResult } from "@/types/technician";
 import type { TechnicianInput } from "@/types/technician";
 
-const createDiagnosis = (input: TechnicianInput): DiagnosisResult => {
-  const summary = input.escalate
-    ? "Escalation requested. Review the asset and provide on-site support guidance."
-    : "Review the observed warning indicators and confirm the device power and cabling.";
-
-  const action = input.errorCode
-    ? `Inspect the error code ${input.errorCode} and verify the component connections.`
-    : "Inspect the asset and confirm the visible status lights.";
-
-  return {
-    summary,
-    action,
-    nextStepIndex: input.escalate ? workflowSteps.length - 1 : 0,
-  };
-};
-
 export default function Home() {
   const [diagnosis, setDiagnosis] = useState<DiagnosisResult | null>(null);
   const [activeStep, setActiveStep] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [lastInput, setLastInput] = useState<TechnicianInput | null>(null);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   const currentStep = workflowSteps[activeStep];
 
@@ -38,10 +26,41 @@ export default function Home() {
     return `Asset: ${initialEquipment.name} (${initialEquipment.id})\nLocation: ${initialEquipment.location}\n\nSummary:\n${diagnosis.summary}\n\nNext action:\n${diagnosis.action}\n\nCurrent workflow step:\n${currentStep.title}`;
   }, [diagnosis, currentStep.title]);
 
-  function handleSubmit(input: TechnicianInput) {
-    const result = createDiagnosis(input);
-    setDiagnosis(result);
-    setActiveStep(result.nextStepIndex);
+  async function handleSubmit(input: TechnicianInput) {
+    setLastInput(input);
+    setIsLoading(true);
+    setErrorMessage(null);
+    setStatusMessage(null);
+
+    try {
+      const response = await fetch("/api/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(input),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result?.error || "Failed to generate guidance.");
+      }
+
+      setDiagnosis(result);
+      setActiveStep(result.nextStepIndex);
+      setStatusMessage("Guidance generated successfully.");
+    } catch (error) {
+      setErrorMessage("Something went wrong while generating guidance. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function handleRetry() {
+    if (lastInput) {
+      await handleSubmit(lastInput);
+    }
   }
 
   return (
@@ -66,7 +85,32 @@ export default function Home() {
                 <h2 className="text-2xl font-semibold text-slate-900">Describe the situation</h2>
                 <p className="text-slate-600">Enter the asset ID, symptoms, and error code so the app can generate the next recommended step.</p>
               </div>
-              <TechnicianForm onSubmit={handleSubmit} />
+              {statusMessage && !isLoading ? (
+                <div className="mb-4 rounded-3xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                  {statusMessage}
+                </div>
+              ) : null}
+              {isLoading ? (
+                <div className="mb-4 flex items-center gap-3 rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                  <span className="inline-flex h-4 w-4 animate-spin rounded-full border-2 border-slate-400 border-t-transparent" />
+                  Generating guidance, please wait...
+                </div>
+              ) : null}
+              {errorMessage ? (
+                <div className="mb-4 rounded-3xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                  <p>{errorMessage}</p>
+                  {lastInput ? (
+                    <button
+                      type="button"
+                      onClick={handleRetry}
+                      className="mt-3 inline-flex rounded-2xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-700"
+                    >
+                      Retry
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
+              <TechnicianForm onSubmit={handleSubmit} isLoading={isLoading} />
             </div>
 
             <WorkflowPanel steps={workflowSteps} activeIndex={activeStep} onSelect={setActiveStep} />
