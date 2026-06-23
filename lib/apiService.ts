@@ -1,7 +1,13 @@
 import type { TechnicianInput, DiagnosisResult } from "@/types/technician";
 import { getRagContext } from "@/lib/ragService";
+import { workflowSteps } from "@/lib/mockData";
 
 const OPENAI_BASE_URL = "https://api.openai.com/v1/chat/completions";
+
+function clampStepIndex(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  return Math.min(Math.max(0, Math.round(value)), workflowSteps.length - 1);
+}
 
 export async function generateTechnicianGuidance(input: TechnicianInput): Promise<DiagnosisResult> {
   const openAiKey = process.env.OPENAI_API_KEY;
@@ -60,7 +66,7 @@ async function callOpenAi(input: TechnicianInput, apiKey: string): Promise<Diagn
     return {
       summary: String(parsed.summary ?? "No summary returned."),
       action: String(parsed.action ?? "No action returned."),
-      nextStepIndex: Number(parsed.nextStepIndex ?? 0),
+      nextStepIndex: clampStepIndex(Number(parsed.nextStepIndex ?? 0)),
     };
   } catch (error) {
     throw new Error("Failed to parse OpenAI response as JSON.");
@@ -107,7 +113,7 @@ async function callAnthropic(input: TechnicianInput, apiKey: string): Promise<Di
     return {
       summary: String(parsed.summary ?? "No summary returned."),
       action: String(parsed.action ?? "No action returned."),
-      nextStepIndex: Number(parsed.nextStepIndex ?? 0),
+      nextStepIndex: clampStepIndex(Number(parsed.nextStepIndex ?? 0)),
     };
   } catch (error) {
     throw new Error("Failed to parse Anthropic response as JSON.");
