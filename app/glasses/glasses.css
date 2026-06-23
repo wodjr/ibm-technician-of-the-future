@@ -1,0 +1,134 @@
+:root {
+  --bg-primary: #0a0a0f;
+  --bg-secondary: #14141f;
+  --bg-tertiary: #1e1e2e;
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0b0;
+  --accent-primary: #00d4ff;
+  --accent-secondary: #00ff88;
+  --danger: #ff4466;
+  --warning: #ffaa00;
+  --focus-ring: #00d4ff;
+  --focus-glow: rgba(0, 212, 255, 0.4);
+  --radius-md: 12px;
+}
+
+.glasses-app {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 600px;
+  height: 600px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.glasses-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: var(--bg-secondary);
+  flex-shrink: 0;
+}
+
+.glasses-header h1 {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.glasses-step-count {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.glasses-content {
+  flex: 1;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+}
+
+.glasses-step-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.glasses-step-description {
+  font-size: 17px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.glasses-warning {
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 170, 0, 0.15);
+  border: 1px solid var(--warning);
+  color: var(--warning);
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.glasses-escalation {
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 68, 102, 0.15);
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.glasses-nav {
+  display: flex;
+  gap: 8px;
+  padding: 16px 20px;
+  background: var(--bg-secondary);
+  flex-shrink: 0;
+}
+
+.focusable {
+  flex: 1;
+  min-height: 44px;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  border: 2px solid transparent;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.focusable:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.focusable:focus {
+  outline: none;
+  border-color: var(--focus-ring);
+  box-shadow: 0 0 20px var(--focus-glow);
+}
+
+.focusable.danger {
+  background: var(--danger);
+  color: #ffffff;
+}
+
+.focusable.danger.active {
+  background: var(--bg-tertiary);
+  color: var(--danger);
+  border-color: var(--danger);
+}

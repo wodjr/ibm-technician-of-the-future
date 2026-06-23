@@ -6,9 +6,11 @@ import type { TechnicianInput } from "@/types/technician";
 type Props = {
   onSubmit: (data: TechnicianInput) => void;
   isLoading?: boolean;
+  dictatedSymptoms?: string;
+  escalateOverride?: boolean;
 };
 
-export default function TechnicianForm({ onSubmit, isLoading = false }: Props) {
+export default function TechnicianForm({ onSubmit, isLoading = false, dictatedSymptoms, escalateOverride }: Props) {
   const [input, setInput] = useState<TechnicianInput>({
     assetId: "BR-1001",
     symptoms: "Device shows red warning light and intermittent network loss.",
@@ -16,6 +18,22 @@ export default function TechnicianForm({ onSubmit, isLoading = false }: Props) {
     photos: [],
     escalate: false,
   });
+
+  const [appliedDictatedSymptoms, setAppliedDictatedSymptoms] = useState(dictatedSymptoms);
+  if (dictatedSymptoms !== appliedDictatedSymptoms) {
+    setAppliedDictatedSymptoms(dictatedSymptoms);
+    if (dictatedSymptoms) {
+      setInput((current) => ({ ...current, symptoms: dictatedSymptoms }));
+    }
+  }
+
+  const [appliedEscalateOverride, setAppliedEscalateOverride] = useState(escalateOverride);
+  if (escalateOverride !== appliedEscalateOverride) {
+    setAppliedEscalateOverride(escalateOverride);
+    if (escalateOverride !== undefined) {
+      setInput((current) => ({ ...current, escalate: escalateOverride }));
+    }
+  }
 
   function handleChange(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     const { name, value, type } = event.target;

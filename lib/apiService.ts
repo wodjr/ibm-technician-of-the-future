@@ -70,17 +70,25 @@ async function callOpenAi(input: TechnicianInput, apiKey: string): Promise<Diagn
 async function callAnthropic(input: TechnicianInput, apiKey: string): Promise<DiagnosisResult> {
   const context = await getRagContext(input.symptoms || input.assetId || input.errorCode);
   const prompt = buildPrompt(input, context);
-  const response = await fetch("https://api.anthropic.com/v1/complete", {
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${apiKey}`,
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "claude-3.5",
-      prompt: `\nHuman: ${prompt}\nAssistant:`,
-      max_tokens_to_sample: 250,
+      model: "claude-sonnet-4-5",
+      max_tokens: 250,
       temperature: 0.7,
+      system:
+        "You are a technician assistance generator. Use the provided manual context to give precise, safe repair guidance. Return only valid JSON with keys summary, action, and nextStepIndex.",
+      messages: [
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
     }),
   });
 
@@ -89,7 +97,7 @@ async function callAnthropic(input: TechnicianInput, apiKey: string): Promise<Di
   }
 
   const data = await response.json();
-  const text = data?.completion;
+  const text = data?.content?.[0]?.text;
   if (!text) {
     throw new Error("Anthropic returned an unexpected response.");
   }

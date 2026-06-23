@@ -1,14 +1,26 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Navigation from "@/components/Navigation";
 import TechnicianForm from "@/components/TechnicianForm";
 import WorkflowPanel from "@/components/WorkflowPanel";
 import OutputScreen from "@/components/OutputScreen";
 import ReportSection from "@/components/ReportSection";
+import VoiceControlBar from "@/components/VoiceControlBar";
 import { initialEquipment, workflowSteps } from "@/lib/mockData";
+import { parseVoiceCommand } from "@/lib/voiceCommands";
+import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
+import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
 import type { DiagnosisResult } from "@/types/technician";
 import type { TechnicianInput } from "@/types/technician";
+
+const DEFAULT_INPUT: TechnicianInput = {
+  assetId: "BR-1001",
+  symptoms: "Device shows red warning light and intermittent network loss.",
+  errorCode: "ERR-402",
+  photos: [],
+  escalate: false,
+};
 
 export default function Home() {
   const [diagnosis, setDiagnosis] = useState<DiagnosisResult | null>(null);
@@ -17,6 +29,10 @@ export default function Home() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [lastInput, setLastInput] = useState<TechnicianInput | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [ttsEnabled, setTtsEnabled] = useState(false);
+  const [dictationMode, setDictationMode] = useState(false);
+  const [dictatedSymptoms, setDictatedSymptoms] = useState<string | undefined>(undefined);
+  const [escalateOverride, setEscalateOverride] = useState<boolean | undefined>(undefined);
 
   const currentStep = workflowSteps[activeStep];
 
@@ -63,6 +79,60 @@ export default function Home() {
     }
   }
 
+  const { speak } = useSpeechSynthesis();
+
+  function handleVoiceResult(transcript: string) {
+    if (dictationMode) {
+      setDictatedSymptoms(transcript);
+      setDictationMode(false);
+      return;
+    }
+
+    const command = parseVoiceCommand(transcript);
+    switch (command.type) {
+      case "next":
+        setActiveStep((index) => Math.min(workflowSteps.length - 1, index + 1));
+        break;
+      case "previous":
+        setActiveStep((index) => Math.max(0, index - 1));
+        break;
+      case "repeat":
+        speak(currentStep.description);
+        break;
+      case "read-report":
+        speak(summaryReport ?? "No report has been generated yet.");
+        break;
+      case "escalate-on":
+        setEscalateOverride(true);
+        break;
+      case "escalate-off":
+        setEscalateOverride(false);
+        break;
+      case "start-dictation":
+        setDictationMode(true);
+        break;
+      case "submit":
+        handleSubmit({
+          ...(lastInput ?? DEFAULT_INPUT),
+          symptoms: dictatedSymptoms ?? (lastInput ?? DEFAULT_INPUT).symptoms,
+          escalate: escalateOverride ?? (lastInput ?? DEFAULT_INPUT).escalate,
+        });
+        break;
+      case "unknown":
+        break;
+    }
+  }
+
+  const { isSupported: isMicSupported, isListening, error: micError, start, stop } = useSpeechRecognition({
+    onResult: handleVoiceResult,
+  });
+
+  useEffect(() => {
+    if (diagnosis && ttsEnabled) {
+      speak(`${diagnosis.summary} Next action: ${diagnosis.action}`);
+    }
+  }, [diagnosis, ttsEnabled, speak]);
+
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900">
       <Navigation />
@@ -76,6 +146,18 @@ export default function Home() {
             </p>
           </div>
         </section>
+
+        <div className="mt-8">
+          <VoiceControlBar
+            isSupported={isMicSupported}
+            isListening={isListening}
+            isDictating={dictationMode}
+            micError={micError}
+            ttsEnabled={ttsEnabled}
+            onToggleListening={() => (isListening ? stop() : start())}
+            onToggleTts={() => setTtsEnabled((value) => !value)}
+          />
+        </div>
 
         <div className="mt-8 grid gap-8 xl:grid-cols-[1.15fr_0.85fr]">
           <div className="space-y-8">
@@ -110,7 +192,12 @@ export default function Home() {
                   ) : null}
                 </div>
               ) : null}
-              <TechnicianForm onSubmit={handleSubmit} isLoading={isLoading} />
+              <TechnicianForm
+                onSubmit={handleSubmit}
+                isLoading={isLoading}
+                dictatedSymptoms={dictatedSymptoms}
+                escalateOverride={escalateOverride}
+              />
             </div>
 
             <WorkflowPanel steps={workflowSteps} activeIndex={activeStep} onSelect={setActiveStep} />

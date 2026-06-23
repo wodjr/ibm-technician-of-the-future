@@ -57,8 +57,25 @@ npx tsc --noEmit  # TypeScript type check
 
 1. Push the repository to GitHub.
 2. Import the project into Vercel.
-3. Add required environment variables in Vercel if used.
+3. Configure environment variables in Vercel if using AI generation.
 4. Deploy and verify the production URL.
+
+### Vercel environment variables
+
+Set one of the following keys in your Vercel project settings:
+
+- `OPENAI_API_KEY` — for OpenAI model calls
+- `ANTHROPIC_API_KEY` — for Anthropic model calls
+
+Do not place API keys in frontend code. Vercel will make them available server-side only.
+
+### Recommended Vercel deployment steps
+
+1. Open Vercel and connect your GitHub repository.
+2. Choose `main` as the production branch.
+3. Set environment variables under the project settings.
+4. Start the deployment.
+5. Once complete, open the provided URL and verify the app loads.
 
 ## Project structure
 
