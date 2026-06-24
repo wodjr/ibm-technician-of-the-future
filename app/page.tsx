@@ -34,6 +34,7 @@ export default function Home() {
   const [dictatedSymptoms, setDictatedSymptoms] = useState<string | undefined>(undefined);
   const [escalateOverride, setEscalateOverride] = useState<boolean | undefined>(undefined);
   const [voiceFeedback, setVoiceFeedback] = useState<string | null>(null);
+  const [hasStarted, setHasStarted] = useState(false);
 
   const currentStep = workflowSteps[activeStep];
 
@@ -82,13 +83,13 @@ export default function Home() {
 
   const { speak } = useSpeechSynthesis();
 
-  useEffect(() => {
-    speak("To begin, tap Tap to talk on your phone.");
-    // Best effort only: most browsers (especially iOS Safari) block audio
-    // until the user has interacted with the page at least once, so this
-    // may silently do nothing on first load — the on-screen text is the
-    // reliable fallback.
-  }, [speak]);
+  function handleStart() {
+    setHasStarted(true);
+    // Speaking synchronously inside this click handler is what lets browsers
+    // (especially iOS Safari) actually play it — audio is blocked until the
+    // user's first tap, and this tap is that first interaction.
+    speak("To begin, tap Tap to talk.");
+  }
 
   function handleVoiceResult(transcript: string) {
     if (dictationMode) {
@@ -154,6 +155,21 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900">
+      {!hasStarted ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950 p-6">
+          <div className="max-w-sm space-y-6 text-center">
+            <p className="text-sm font-semibold uppercase tracking-[0.32em] text-pink-300">Technician workflow</p>
+            <h1 className="text-2xl font-semibold text-white">Tap to start your session</h1>
+            <button
+              type="button"
+              onClick={handleStart}
+              className="inline-flex w-full items-center justify-center rounded-2xl bg-white px-6 py-4 text-lg font-semibold text-slate-950 transition hover:bg-slate-100"
+            >
+              Start
+            </button>
+          </div>
+        </div>
+      ) : null}
       <Navigation />
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         <VoiceControlBar
