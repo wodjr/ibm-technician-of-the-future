@@ -101,14 +101,24 @@ export default function Home() {
 
     const command = parseVoiceCommand(transcript);
     switch (command.type) {
-      case "next":
-        setActiveStep((index) => Math.min(workflowSteps.length - 1, index + 1));
+      case "next": {
+        const nextIndex = Math.min(workflowSteps.length - 1, activeStep + 1);
+        const nextStep = workflowSteps[nextIndex];
+        setActiveStep(nextIndex);
+        speak(`${nextStep.title}. ${nextStep.description}${nextStep.warning ? ` Warning: ${nextStep.warning}` : ""}`);
         setVoiceFeedback(`Heard "${transcript}" — moving to the next step.`);
         break;
-      case "previous":
-        setActiveStep((index) => Math.max(0, index - 1));
+      }
+      case "previous": {
+        const previousIndex = Math.max(0, activeStep - 1);
+        const previousStep = workflowSteps[previousIndex];
+        setActiveStep(previousIndex);
+        speak(
+          `${previousStep.title}. ${previousStep.description}${previousStep.warning ? ` Warning: ${previousStep.warning}` : ""}`
+        );
         setVoiceFeedback(`Heard "${transcript}" — moving to the previous step.`);
         break;
+      }
       case "repeat":
         speak(currentStep.description);
         setVoiceFeedback(`Heard "${transcript}" — repeating the current step.`);
