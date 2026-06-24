@@ -35,6 +35,11 @@ export default function VoiceControlBar({
 
   return (
     <div className="space-y-3 rounded-3xl bg-white p-4 shadow-sm shadow-slate-200">
+      {!isListening && !voiceFeedback ? (
+        <p className="text-base font-semibold text-slate-900">
+          To begin, tap &quot;Tap to talk&quot; below.
+        </p>
+      ) : null}
       <div className="flex items-center gap-3">
         <button
           type="button"

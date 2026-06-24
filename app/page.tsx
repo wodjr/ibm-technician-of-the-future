@@ -82,6 +82,14 @@ export default function Home() {
 
   const { speak } = useSpeechSynthesis();
 
+  useEffect(() => {
+    speak("To begin, tap Tap to talk on your phone.");
+    // Best effort only: most browsers (especially iOS Safari) block audio
+    // until the user has interacted with the page at least once, so this
+    // may silently do nothing on first load — the on-screen text is the
+    // reliable fallback.
+  }, [speak]);
+
   function handleVoiceResult(transcript: string) {
     if (dictationMode) {
       setDictatedSymptoms(transcript);
