@@ -46,6 +46,7 @@ export function useSpeechRecognition({ onResult }: Options) {
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const onResultRef = useRef(onResult);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const outcomeHandledRef = useRef(false);
 
   useEffect(() => {
     onResultRef.current = onResult;
@@ -68,11 +69,13 @@ export function useSpeechRecognition({ onResult }: Options) {
     recognition.lang = "en-US";
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
+      outcomeHandledRef.current = true;
       clearListeningTimeout();
       const transcript = event.results[event.results.length - 1][0].transcript;
       onResultRef.current(transcript);
     };
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      outcomeHandledRef.current = true;
       clearListeningTimeout();
       setError(describeError(event.error));
       setIsListening(false);
@@ -80,6 +83,9 @@ export function useSpeechRecognition({ onResult }: Options) {
     recognition.onend = () => {
       clearListeningTimeout();
       setIsListening(false);
+      if (!outcomeHandledRef.current) {
+        setError("Didn't catch that — no speech reached the microphone. Try again.");
+      }
     };
 
     recognitionRef.current = recognition;
@@ -93,10 +99,12 @@ export function useSpeechRecognition({ onResult }: Options) {
     if (!recognitionRef.current) return;
     setError(null);
     setIsListening(true);
+    outcomeHandledRef.current = false;
     recognitionRef.current.start();
 
     clearListeningTimeout();
     timeoutRef.current = setTimeout(() => {
+      outcomeHandledRef.current = true;
       recognitionRef.current?.abort();
       setIsListening(false);
       setError("Didn't hear anything in time. Try again.");
