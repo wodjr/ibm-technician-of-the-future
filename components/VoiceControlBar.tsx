@@ -7,6 +7,7 @@ type Props = {
   isListening: boolean;
   isDictating: boolean;
   micError: string | null;
+  voiceFeedback: string | null;
   ttsEnabled: boolean;
   onToggleListening: () => void;
   onToggleTts: () => void;
@@ -17,6 +18,7 @@ export default function VoiceControlBar({
   isListening,
   isDictating,
   micError,
+  voiceFeedback,
   ttsEnabled,
   onToggleListening,
   onToggleTts,
@@ -61,6 +63,7 @@ export default function VoiceControlBar({
         ) : null}
       </div>
       {micError ? <p className="text-sm text-rose-600">{micError}</p> : null}
+      {voiceFeedback ? <p className="text-sm font-medium text-slate-700">{voiceFeedback}</p> : null}
       {showExplainer ? (
         <div className="flex items-start justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
           <p>

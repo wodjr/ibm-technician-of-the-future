@@ -33,6 +33,7 @@ export default function Home() {
   const [dictationMode, setDictationMode] = useState(false);
   const [dictatedSymptoms, setDictatedSymptoms] = useState<string | undefined>(undefined);
   const [escalateOverride, setEscalateOverride] = useState<boolean | undefined>(undefined);
+  const [voiceFeedback, setVoiceFeedback] = useState<string | null>(null);
 
   const currentStep = workflowSteps[activeStep];
 
@@ -85,6 +86,7 @@ export default function Home() {
     if (dictationMode) {
       setDictatedSymptoms(transcript);
       setDictationMode(false);
+      setVoiceFeedback(`Symptoms set to: "${transcript}". Say "submit" to send it.`);
       return;
     }
 
@@ -92,24 +94,31 @@ export default function Home() {
     switch (command.type) {
       case "next":
         setActiveStep((index) => Math.min(workflowSteps.length - 1, index + 1));
+        setVoiceFeedback(`Heard "${transcript}" — moving to the next step.`);
         break;
       case "previous":
         setActiveStep((index) => Math.max(0, index - 1));
+        setVoiceFeedback(`Heard "${transcript}" — moving to the previous step.`);
         break;
       case "repeat":
         speak(currentStep.description);
+        setVoiceFeedback(`Heard "${transcript}" — repeating the current step.`);
         break;
       case "read-report":
         speak(summaryReport ?? "No report has been generated yet.");
+        setVoiceFeedback(`Heard "${transcript}" — reading the report.`);
         break;
       case "escalate-on":
         setEscalateOverride(true);
+        setVoiceFeedback(`Heard "${transcript}" — escalation flagged.`);
         break;
       case "escalate-off":
         setEscalateOverride(false);
+        setVoiceFeedback(`Heard "${transcript}" — escalation cleared.`);
         break;
       case "start-dictation":
         setDictationMode(true);
+        setVoiceFeedback(`Heard "${transcript}" — listening for symptoms next.`);
         break;
       case "submit":
         handleSubmit({
@@ -117,8 +126,10 @@ export default function Home() {
           symptoms: dictatedSymptoms ?? (lastInput ?? DEFAULT_INPUT).symptoms,
           escalate: escalateOverride ?? (lastInput ?? DEFAULT_INPUT).escalate,
         });
+        setVoiceFeedback(`Heard "${transcript}" — submitting.`);
         break;
       case "unknown":
+        setVoiceFeedback(`Didn't recognize "${transcript}". Try "next step", "repeat", or "escalate".`);
         break;
     }
   }
@@ -142,6 +153,7 @@ export default function Home() {
           isListening={isListening}
           isDictating={dictationMode}
           micError={micError}
+          voiceFeedback={voiceFeedback}
           ttsEnabled={ttsEnabled}
           onToggleListening={() => (isListening ? stop() : start())}
           onToggleTts={() => setTtsEnabled((value) => !value)}
