@@ -37,16 +37,26 @@ type Options = {
   onResult: (transcript: string) => void;
 };
 
+const LISTENING_TIMEOUT_MS = 8000;
+
 export function useSpeechRecognition({ onResult }: Options) {
   const [isListening, setIsListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const isSupported = useSyncExternalStore(subscribeNoop, getSupportSnapshot, getServerSupportSnapshot);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const onResultRef = useRef(onResult);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     onResultRef.current = onResult;
   }, [onResult]);
+
+  const clearListeningTimeout = useCallback(() => {
+    if (timeoutRef.current !== null) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  }, []);
 
   useEffect(() => {
     const Recognition = getSpeechRecognitionConstructor();
@@ -58,30 +68,46 @@ export function useSpeechRecognition({ onResult }: Options) {
     recognition.lang = "en-US";
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
+      clearListeningTimeout();
       const transcript = event.results[event.results.length - 1][0].transcript;
       onResultRef.current(transcript);
     };
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      clearListeningTimeout();
       setError(describeError(event.error));
       setIsListening(false);
     };
-    recognition.onend = () => setIsListening(false);
+    recognition.onend = () => {
+      clearListeningTimeout();
+      setIsListening(false);
+    };
 
     recognitionRef.current = recognition;
-    return () => recognition.abort();
-  }, []);
+    return () => {
+      clearListeningTimeout();
+      recognition.abort();
+    };
+  }, [clearListeningTimeout]);
 
   const start = useCallback(() => {
     if (!recognitionRef.current) return;
     setError(null);
     setIsListening(true);
     recognitionRef.current.start();
-  }, []);
+
+    clearListeningTimeout();
+    timeoutRef.current = setTimeout(() => {
+      recognitionRef.current?.abort();
+      setIsListening(false);
+      setError("Didn't hear anything in time. Try again.");
+    }, LISTENING_TIMEOUT_MS);
+  }, [clearListeningTimeout]);
 
   const stop = useCallback(() => {
+    clearListeningTimeout();
     recognitionRef.current?.stop();
     setIsListening(false);
-  }, []);
+  }, [clearListeningTimeout]);
 
   return { isSupported, isListening, error, start, stop };
 }
