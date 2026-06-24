@@ -137,7 +137,17 @@ export default function Home() {
     <div className="min-h-screen bg-slate-100 text-slate-900">
       <Navigation />
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-        <section className="rounded-[2rem] bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 px-6 py-14 text-white shadow-2xl shadow-slate-500/10 sm:px-10">
+        <VoiceControlBar
+          isSupported={isMicSupported}
+          isListening={isListening}
+          isDictating={dictationMode}
+          micError={micError}
+          ttsEnabled={ttsEnabled}
+          onToggleListening={() => (isListening ? stop() : start())}
+          onToggleTts={() => setTtsEnabled((value) => !value)}
+        />
+
+        <section className="mt-6 rounded-[2rem] bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 px-6 py-14 text-white shadow-2xl shadow-slate-500/10 sm:px-10">
           <div className="mx-auto max-w-3xl space-y-6 text-center">
             <p className="text-sm font-semibold uppercase tracking-[0.32em] text-pink-300">Technician workflow</p>
             <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">AI-ready field support for technicians</h1>
@@ -146,18 +156,6 @@ export default function Home() {
             </p>
           </div>
         </section>
-
-        <div className="mt-8">
-          <VoiceControlBar
-            isSupported={isMicSupported}
-            isListening={isListening}
-            isDictating={dictationMode}
-            micError={micError}
-            ttsEnabled={ttsEnabled}
-            onToggleListening={() => (isListening ? stop() : start())}
-            onToggleTts={() => setTtsEnabled((value) => !value)}
-          />
-        </div>
 
         <div className="mt-8 grid gap-8 xl:grid-cols-[1.15fr_0.85fr]">
           <div className="space-y-8">
