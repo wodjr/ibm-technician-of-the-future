@@ -28,8 +28,14 @@ function describeError(code: string): string {
       return "No speech was detected. Try again.";
     case "network":
       return "A network error interrupted speech recognition.";
+    case "audio-capture":
+      return "Couldn't access the microphone — check that it isn't in use by another app and that the connected mic is working.";
+    case "aborted":
+      return "Listening was interrupted. Try again.";
+    case "service-not-allowed":
+      return "Speech recognition service was blocked. Try again.";
     default:
-      return "Speech recognition failed. Try again.";
+      return `Speech recognition failed (${code}). Try again.`;
   }
 }
 
