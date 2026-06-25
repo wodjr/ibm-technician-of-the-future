@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Navigation from "@/components/Navigation";
 import TechnicianForm from "@/components/TechnicianForm";
 import WorkflowPanel from "@/components/WorkflowPanel";
@@ -35,8 +35,13 @@ export default function Home() {
   const [escalateOverride, setEscalateOverride] = useState<boolean | undefined>(undefined);
   const [voiceFeedback, setVoiceFeedback] = useState<string | null>(null);
   const [hasStarted, setHasStarted] = useState(false);
+  const workflowSectionRef = useRef<HTMLDivElement>(null);
 
   const currentStep = workflowSteps[activeStep];
+
+  function scrollToWorkflow() {
+    workflowSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 
   const summaryReport = useMemo(() => {
     if (!diagnosis) return null;
@@ -114,6 +119,7 @@ export default function Home() {
         const nextStep = workflowSteps[nextIndex];
         setActiveStep(nextIndex);
         pushGlassesState(nextIndex, escalateOverride ?? false);
+        scrollToWorkflow();
         speak(`${nextStep.title}. ${nextStep.description}${nextStep.warning ? ` Warning: ${nextStep.warning}` : ""}`);
         setVoiceFeedback(`Heard "${transcript}" — moving to the next step.`);
         break;
@@ -123,6 +129,7 @@ export default function Home() {
         const previousStep = workflowSteps[previousIndex];
         setActiveStep(previousIndex);
         pushGlassesState(previousIndex, escalateOverride ?? false);
+        scrollToWorkflow();
         speak(
           `${previousStep.title}. ${previousStep.description}${previousStep.warning ? ` Warning: ${previousStep.warning}` : ""}`
         );
@@ -256,7 +263,9 @@ export default function Home() {
               />
             </div>
 
-            <WorkflowPanel steps={workflowSteps} activeIndex={activeStep} onSelect={setActiveStep} />
+            <div ref={workflowSectionRef}>
+              <WorkflowPanel steps={workflowSteps} activeIndex={activeStep} onSelect={setActiveStep} />
+            </div>
           </div>
 
           <div className="space-y-8">
