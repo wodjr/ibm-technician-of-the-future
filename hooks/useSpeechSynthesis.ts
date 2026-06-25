@@ -19,13 +19,22 @@ export function useSpeechSynthesis() {
   const isSupported = useSyncExternalStore(subscribeNoop, getSupportSnapshot, getServerSupportSnapshot);
 
   const speak = useCallback(
-    (text: string) => {
-      if (!isSupported || !text) return;
+    (text: string, onEnd?: () => void) => {
+      if (!isSupported || !text) {
+        onEnd?.();
+        return;
+      }
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.onstart = () => setIsSpeaking(true);
-      utterance.onend = () => setIsSpeaking(false);
-      utterance.onerror = () => setIsSpeaking(false);
+      utterance.onend = () => {
+        setIsSpeaking(false);
+        onEnd?.();
+      };
+      utterance.onerror = () => {
+        setIsSpeaking(false);
+        onEnd?.();
+      };
       window.speechSynthesis.speak(utterance);
     },
     [isSupported]

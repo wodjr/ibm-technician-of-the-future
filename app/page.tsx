@@ -176,6 +176,20 @@ export default function Home() {
     onResult: handleVoiceResult,
   });
 
+  function handleToggleListening() {
+    if (isListening) {
+      stop();
+      return;
+    }
+    // Speaking synchronously inside this tap (a real user gesture) re-pins
+    // the audio session to the Bluetooth route before the later async
+    // speech-recognition result triggers another speak() call — that async
+    // call alone doesn't reliably keep the same output routing on iOS.
+    // Starting recognition only once this finishes avoids it picking up
+    // its own "Listening." playback as input.
+    speak("Listening.", start);
+  }
+
   useEffect(() => {
     if (diagnosis && ttsEnabled) {
       speak(`${diagnosis.summary} Next action: ${diagnosis.action}`);
@@ -208,7 +222,7 @@ export default function Home() {
           micError={micError}
           voiceFeedback={voiceFeedback}
           ttsEnabled={ttsEnabled}
-          onToggleListening={() => (isListening ? stop() : start())}
+          onToggleListening={handleToggleListening}
           onToggleTts={() => setTtsEnabled((value) => !value)}
         />
 
