@@ -83,6 +83,14 @@ export default function Home() {
 
   const { speak } = useSpeechSynthesis();
 
+  function pushGlassesState(nextActiveIndex: number, nextEscalated: boolean) {
+    fetch("/api/glasses-state", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ activeIndex: nextActiveIndex, escalated: nextEscalated }),
+    }).catch(() => {});
+  }
+
   function handleStart() {
     setHasStarted(true);
     // Speaking synchronously inside this click handler is what lets browsers
@@ -105,6 +113,7 @@ export default function Home() {
         const nextIndex = Math.min(workflowSteps.length - 1, activeStep + 1);
         const nextStep = workflowSteps[nextIndex];
         setActiveStep(nextIndex);
+        pushGlassesState(nextIndex, escalateOverride ?? false);
         speak(`${nextStep.title}. ${nextStep.description}${nextStep.warning ? ` Warning: ${nextStep.warning}` : ""}`);
         setVoiceFeedback(`Heard "${transcript}" — moving to the next step.`);
         break;
@@ -113,6 +122,7 @@ export default function Home() {
         const previousIndex = Math.max(0, activeStep - 1);
         const previousStep = workflowSteps[previousIndex];
         setActiveStep(previousIndex);
+        pushGlassesState(previousIndex, escalateOverride ?? false);
         speak(
           `${previousStep.title}. ${previousStep.description}${previousStep.warning ? ` Warning: ${previousStep.warning}` : ""}`
         );
@@ -129,10 +139,12 @@ export default function Home() {
         break;
       case "escalate-on":
         setEscalateOverride(true);
+        pushGlassesState(activeStep, true);
         setVoiceFeedback(`Heard "${transcript}" — escalation flagged.`);
         break;
       case "escalate-off":
         setEscalateOverride(false);
+        pushGlassesState(activeStep, false);
         setVoiceFeedback(`Heard "${transcript}" — escalation cleared.`);
         break;
       case "start-dictation":
